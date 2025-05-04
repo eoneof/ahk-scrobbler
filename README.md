@@ -31,13 +31,12 @@
 
 3. Whitelist your music player:
    - Start music playback in your app of choice.
- 
-     > [!NOTE]  
-     > You can install a web page (e.g. YouTube Music) as a PWA so it would have its unique ID.
-   
    - Run [get_current_music_player_id.ahk](src/config/get_current_music_player_id.ahk) to get the current music player ID. It will be copied to clipboard.
    - Paste the obtained ID into [user_config.ahk](src/config/user_config.ahk) and save.
    - Restart the scrobbler.
+  
+> [!TIP]  
+> You can install a web page (e.g. YouTube Music) as a PWA so it would have its unique ID.
 
 4. Done.
 
