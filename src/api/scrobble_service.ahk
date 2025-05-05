@@ -49,5 +49,5 @@ LoveTrack(artist, track) {
   payload .= "&api_sig=" . Hash.String("MD5", signature)
   payload .= "&format=json"
 
-  return HttpRequest(SCROBBLER_API_URL, "POST", payload)
+  HttpRequest(SCROBBLER_API_URL, "POST", payload)
 }
