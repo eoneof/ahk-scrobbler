@@ -1,53 +1,61 @@
-SendNowPlaying(artist, track, album := "") {
-  payload := "method=track.updateNowPlaying"
-  payload .= "&sk=" . SESSION_KEY
-  payload .= "&api_key=" . API_KEY
-  payload .= "&artist=" . UrlEncode(artist)
-  payload .= "&track=" . UrlEncode(track)
-  payload .= "&album=" . UrlEncode(album)
+class Scrobbler {
+  __New(apiKey, apiSecret, sessionKey) {
+    this.ApiKey := apiKey
+    this.ApiSecret := apiSecret
+    this.SessionKey := sessionKey
+  }
 
-  HttpRequest(SCROBBLER_API_URL, "POST", payload)
-}
+  SendNowPlaying(artist, track, album := "") {
+    payload := "method=track.updateNowPlaying"
+    payload .= "&sk=" . this.SessionKey
+    payload .= "&api_key=" . this.ApiKey
+    payload .= "&artist=" . UrlEncode(artist)
+    payload .= "&track=" . UrlEncode(track)
+    payload .= "&album=" . UrlEncode(album)
 
-Scrobble(artist, track, album := "", timestamp := CurrentUnixTime()) {
-  payload := "method=track.scrobble"
-  payload .= "&sk=" . SESSION_KEY
-  payload .= "&api_key=" . API_KEY
-  payload .= "&artist=" . UrlEncode(artist)
-  payload .= "&track=" . UrlEncode(track)
-  payload .= "&timestamp=" . timestamp
-  payload .= "&album=" . UrlEncode(album)
+    HttpRequest(SCROBBLER_API_URL, "POST", payload)
+    }
 
-  signature := "album" . album
-  signature .= "api_key" . API_KEY
-  signature .= "artist" . artist
-  signature .= "methodtrack.scrobble"
-  signature .= "sk" . SESSION_KEY
-  signature .= "timestamp" . timestamp
-  signature .= "track" . track
-  signature .= API_SECRET
+  Scrobble(artist, track, album := "", timestamp := CurrentUnixTime()) {
+    payload := "method=track.scrobble"
+    payload .= "&sk=" . this.SessionKey
+    payload .= "&api_key=" . this.ApiKey
+    payload .= "&artist=" . UrlEncode(artist)
+    payload .= "&track=" . UrlEncode(track)
+    payload .= "&timestamp=" . timestamp
+    payload .= "&album=" . UrlEncode(album)
 
-  payload .= "&api_sig=" . Hash.String("MD5", signature)
-  payload .= "&format=json"
+    signature := "album" . album
+    signature .= "api_key" . this.ApiKey
+    signature .= "artist" . artist
+    signature .= "methodtrack.scrobble"
+    signature .= "sk" . this.SessionKey
+    signature .= "timestamp" . timestamp
+    signature .= "track" . track
+    signature .= this.ApiSecret
 
-  HttpRequest(SCROBBLER_API_URL, "POST", payload)
-}
+    payload .= "&api_sig=" . Hash.String("MD5", signature)
+    payload .= "&format=json"
 
-LoveTrack(artist, track) {
-  payload := "method=track.love"
-  payload .= "&sk=" . SESSION_KEY
-  payload .= "&api_key=" . API_KEY
-  payload .= "&artist=" . UrlEncode(artist)
-  payload .= "&track=" . UrlEncode(track)
+    HttpRequest(SCROBBLER_API_URL, "POST", payload)
+    }
 
-  signature := "api_key" . API_KEY
-  signature .= "artist" . artist
-  signature .= "methodtrack.lovesk" . SESSION_KEY
-  signature .= "track" . track
-  signature .= API_SECRET
+  LoveTrack(artist, track) {
+    payload := "method=track.love"
+    payload .= "&sk=" . this.SessionKey
+    payload .= "&api_key=" . this.ApiKey
+    payload .= "&artist=" . UrlEncode(artist)
+    payload .= "&track=" . UrlEncode(track)
 
-  payload .= "&api_sig=" . Hash.String("MD5", signature)
-  payload .= "&format=json"
+    signature := "api_key" . this.ApiKey
+    signature .= "artist" . artist
+    signature .= "methodtrack.lovesk" . this.SessionKey
+    signature .= "track" . track
+    signature .= this.ApiSecret
 
-  HttpRequest(SCROBBLER_API_URL, "POST", payload)
+    payload .= "&api_sig=" . Hash.String("MD5", signature)
+    payload .= "&format=json"
+
+    HttpRequest(SCROBBLER_API_URL, "POST", payload)
+  }
 }

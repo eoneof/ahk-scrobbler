@@ -1,15 +1,13 @@
 class ConfigDialog {
   static isDialogOpen := false
 
-  __New() {
+  __New(registerApiUrl) {
+    this.url := registerApiUrl
     this.isDialogOpen := ConfigDialog.isDialogOpen
-    this.url := REGISTER_API_URL
 
     if (this.isDialogOpen) {
       return
     }
-
-    this.Show()
   }
 
   _isValidInput(str) {
@@ -37,9 +35,9 @@ class ConfigDialog {
   }
 
   _bindInputsEvents() {
-    this.apiKeyInput.OnEvent("Change", (*) => this._handleInputsChange())
-    this.apiSecretInput.OnEvent("Change", (*) => this._handleInputsChange())
-    this.userNameInput.OnEvent("Change", (*) => this._handleInputsChange())
+    this.apiKeyInput.OnEvent("Change", (*) => this._toggleButtonState())
+    this.apiSecretInput.OnEvent("Change", (*) => this._toggleButtonState())
+    this.userNameInput.OnEvent("Change", (*) => this._toggleButtonState())
   }
 
   _addInputs() {
@@ -74,10 +72,6 @@ class ConfigDialog {
     this.dialog.OnEvent("Escape", (*) => this.Close())
   }
 
-  _handleInputsChange() {
-    this._toggleButtonState()
-  }
-
   Show() {
     this._getExistingVars()
 
@@ -89,7 +83,6 @@ class ConfigDialog {
 
     if (this.existingApiKey || this.existingApiSecret) {
       this._toggleButtonState()
-
       this.apiKeyStatus.Opt("-Hidden")
       this.apiSecretStatus.Opt("-Hidden")
     }
@@ -162,6 +155,7 @@ class ConfigDialog {
 
     if (WriteEnv(ENV_FILE, vars)) {
       this.Close()
+
       Reload()
     }
   }

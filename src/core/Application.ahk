@@ -1,49 +1,34 @@
 class Application {
-  static EnvVars := ReadEnv(ENV_FILE)
-  static API_KEY := Application.EnvVars.Has("API_KEY") ? Application.EnvVars["API_KEY"] : ""
-  static API_SECRET := Application.EnvVars.Has("API_SECRET") ? Application.EnvVars["API_SECRET"] : ""
-  static SESSION_KEY := Application.EnvVars.Has("SESSION_KEY") ? Application.EnvVars["SESSION_KEY"] : ""
-  static USER_NAME := Application.EnvVars.Has("USER_NAME") ? Application.EnvVars["USER_NAME"] : ""
+  __New(data, modules) {
+    this.envVars := data.envVars
+    this.apiKey := data.apiKey
+    this.apiSecret := data.apiSecret
+    this.sessionKey := data.sessionKey
+    this.userName := data.userName
 
-  __New(auth) {
-    this.app := Application
-    this.auth := auth(
-      ENV_FILE,
-      this.app.API_KEY, 
-      this.app.API_SECRET, 
-      this.app.EnvVars
-    )
+    this.authService := modules.authenticator
+    this.scrobbleService := modules.scrobbler
+    this.mediaMonitor := modules.mediaMonitor
+    this.configDialog := modules.configDialog
+    this.trayMenu := modules.trayMenu
 
-    ; temp fallbacks
-    global EnvVars := ReadEnv(ENV_FILE)
-    global API_KEY := this.app.API_KEY
-    global API_SECRET := this.app.API_SECRET
-    global SESSION_KEY := this.app.SESSION_KEY
-    global USER_NAME := this.app.USER_NAME
   }
 
   Run() {
-    if (!this.app.EnvVars) {
-      ShowConfigDialog()
-
+    if (!this.envVars) {
+      this.configDialog.Show()
       return
     }
 
-    if (!this.app.API_KEY && !this.app.API_SECRET) {
-      ShowConfigDialog()
+    if (!this.apiKey && !this.apiSecret) {
+      this.configDialog.Show()
     }
 
-    if (!this.app.SESSION_KEY) {
-      sessionKey := this.auth.Auth()
-      this.app.SESSION_KEY := sessionKey
+    if (!this.sessionKey) {
+      this.sessionKey := this.authService.Auth()
     }
 
-    if (!this.app.USER_NAME) {
-      A_TrayMenu.Disable("Open profile")
-    } else {
-      A_TrayMenu.Add("Open profile", (*) => this.auth.OpenProfilePage(this.app.USER_NAME))
-    }
-
-    StartMediaMonitor()
+    this.trayMenu.Setup()
+    this.mediaMonitor.Start()
   }
 }

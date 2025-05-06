@@ -27,9 +27,21 @@ Persistent()
 #Include .\core\Application.ahk
 
 main() {
-  auth := AuthService
-  app := Application(auth)
+  data := {}
+  data.envVars := ReadEnv(ENV_FILE)
+  data.apiKey := data.envVars.Has("API_KEY") ? data.envVars["API_KEY"] : ""
+  data.apiSecret := data.envVars.Has("API_SECRET") ? data.envVars["API_SECRET"] : ""
+  data.sessionKey := data.envVars.Has("SESSION_KEY") ? data.envVars["SESSION_KEY"] : ""
+  data.userName := data.envVars.Has("USER_NAME") ? data.envVars["USER_NAME"] : ""
 
+  modules := {}
+  modules.authenticator := Authenticator(ENV_FILE, data.apiKey, data.apiSecret, data.envVars)
+  modules.scrobbler := Scrobbler(data.apiKey, data.apiSecret, data.sessionKey)
+  modules.mediaMonitor := MediaMonitor(Media, data.scrobbler)
+  modules.configDialog := ConfigDialog(REGISTER_API_URL)
+  modules.trayMenu := TrayMenu(data.mediaMonitor, data.configDialog, data.authenticator, data.userName)
+
+  app := Application(data, modules)
   app.Run()
 }
 

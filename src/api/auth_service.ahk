@@ -1,6 +1,6 @@
-class AuthService {
-  __New(envFilePath, apiKey, apiSecret, envVars) {
-    this.envFilePath := envFilePath
+class Authenticator {
+  __New(envFile, apiKey, apiSecret, envVars) {
+    this.envFile := envFile
     this.apiKey := apiKey
     this.apiSecret := apiSecret
     this.envVars := envVars
@@ -73,7 +73,7 @@ class AuthService {
   SaveSessionKey(sessionKey) {
     this.envVars["SESSION_KEY"] := sessionKey
 
-    WriteEnv(this.envFilePath, this.envVars)
+    WriteEnv(this.envFile, this.envVars)
   }
 
   Auth() {
@@ -82,12 +82,12 @@ class AuthService {
     sessionKey := this.ConnectApplication(token, signature)
 
     this.SaveSessionKey(sessionKey)
-    
+
     return sessionKey
   }
 
   OpenProfilePage(userName) {
-    url := "https://www.last.fm/user/" . userName
+    url := USER_ENDPOINT . userName
 
     Run(url)
   }

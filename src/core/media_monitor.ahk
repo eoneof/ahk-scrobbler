@@ -1,127 +1,131 @@
-GetMediaSessionStatus(session) {
-  closed := 0
-  playing := 1
-  paused := 2
-  stopped := 3
-  changing := 4
-  seeking := 5
-  isAllowed := false
-
-  if (!session || !session.HasProp("PlaybackStatus")) {
-    return false
+class MediaMonitor {
+  __New(media, scrobbleService) {
+    this.Media := media
+    this.ScrobbleService := scrobbleService
+    this.LastTrack := ""
+    this.LastArtist := ""
+    this.HasScrobbled := false
+    this.MediaSession := ""
   }
 
-  try {
-    status := session.PlaybackStatus
-    appId := session.SourceAppUserModelId
+  GetMediaSessionStatus(session) {
+    closed := 0
+    playing := 1
+    paused := 2
+    stopped := 3
+    changing := 4
+    seeking := 5
+    isAllowed := false
 
-    for appName in ALLOWED_APPS {
-      if (InStr(appId, appName)) {
-        isAllowed := true
-
-        break
-      }
-    }
-
-    if (!isAllowed) {
+    if (!session || !session.HasProp("PlaybackStatus")) {
       return false
     }
 
-    return status !== closed
-  } catch Error as err {
-    return false
+    try {
+      status := session.PlaybackStatus
+      appId := session.SourceAppUserModelId
+
+      for appName in ALLOWED_APPS {
+        if (InStr(appId, appName)) {
+          isAllowed := true
+
+          break
+        }
+      }
+
+      if (!isAllowed) {
+        return false
+      }
+
+      return status !== closed
+    } catch Error as err {
+      return false
+    }
   }
-}
 
-CheckCurrentTrack() {
-  try {
-    global MediaSession := Media.GetCurrentSession()
-
-    if (!GetMediaSessionStatus(MediaSession)) {
-      SetTimer(CheckCurrentTrack, TRACK_POLLING_INTERVAL)
+  CheckCurrentTrack() {
+    try {
+      this.MediaSession := this.Media.GetCurrentSession()
+      if (!this.GetMediaSessionStatus(this.MediaSession)) {
+        SetTimer(this.CheckCurrentTrack.Bind(this), TRACK_POLLING_INTERVAL)
+        return
+      }
+    } catch {
+      this.MediaSession := ""
+      SetTimer(this.CheckCurrentTrack.Bind(this), TRACK_POLLING_INTERVAL)
       return
     }
-  } catch {
-    global MediaSession := ""
-    SetTimer(CheckCurrentTrack, TRACK_POLLING_INTERVAL)
-    return
-  }
 
-  currentArtist := MediaSession.Artist
-  currentTrack := MediaSession.Title
-  currentLength := MediaSession.EndTime
-  currentPosition := MediaSession.Position
+    currentArtist := this.MediaSession.Artist
+    currentTrack := this.MediaSession.Title
+    currentLength := this.MediaSession.EndTime
+    currentPosition := this.MediaSession.Position
 
-  A_IconTip := "▶ " . currentArtist . " — " . currentTrack
+    A_IconTip := "▶ " . currentArtist . " — " . currentTrack
 
-  if (
-    currentTrack &&
-    currentArtist &&
-    (
-      currentTrack != LastTrack ||
-      currentArtist != LastArtist
-    )
-  ) {
-    global LastTrack := currentTrack
-    global LastArtist := currentArtist
-    global HasScrobbled := false
+    if (
+      currentTrack &&
+      currentArtist &&
+      (
+        currentTrack != this.LastTrack ||
+        currentArtist != this.LastArtist
+      )
+    ) {
+      this.LastTrack := currentTrack
+      this.LastArtist := currentArtist
+      this.HasScrobbled := false
 
-    SendNowPlaying(currentArtist, currentTrack)
+      this.ScrobbleService.SendNowPlaying(currentArtist, currentTrack)
 
-    scrobbleDelay := CalculateScrobbleDelay(currentLength)
+      scrobbleDelay := this.CalculateScrobbleDelay(currentLength)
 
-    if (scrobbleDelay > 0) {
-      SetTimer(ScrobbleCurrentTrack, -scrobbleDelay)
+      if (scrobbleDelay > 0) {
+        SetTimer(this.ScrobbleCurrentTrack.Bind(this), -scrobbleDelay)
+      }
     }
   }
-}
 
-CalculateScrobbleDelay(trackLength) {
-  if (!trackLength) {
-    return SCROBBLE_DELAY
+  CalculateScrobbleDelay(trackLength) {
+    if (!trackLength) {
+      return SCROBBLE_DELAY
+    }
+
+    scrobbleAt := Min(trackLength * TRACK_LENGTH_FACTOR, MIN_TIME_BEFORE_SCROBBLE)
+    waitAtLeast := Max(scrobbleAt, SCROBBLE_DELAY)
+
+    return waitAtLeast
   }
 
-  ; Scrobble at predefined % of track length or predefined seconds, whichever comes first
-  scrobbleAt := Min(trackLength * TRACK_LENGTH_FACTOR, MIN_TIME_BEFORE_SCROBBLE)
-  waitAtLeast := Max(scrobbleAt, SCROBBLE_DELAY)
+  ScrobbleCurrentTrack() {
+    if (!this.MediaSession || this.HasScrobbled) {
+      return
+    }
 
-  return waitAtLeast
-}
+    checkArtist := this.MediaSession.Artist
+    checkTrack := this.MediaSession.Title
 
-ScrobbleCurrentTrack() {
-  if (!MediaSession || HasScrobbled) {
-    return
+    if (
+      checkTrack = this.LastTrack &&
+      checkArtist = this.LastArtist
+    ) {
+      this.ScrobbleService.Scrobble(checkArtist, checkTrack)
+      this.HasScrobbled := true
+    }
   }
 
-  checkArtist := MediaSession.Artist
-  checkTrack := MediaSession.Title
-
-  if (
-    checkTrack = LastTrack &&
-    checkArtist = LastArtist
-  ) {
-    Scrobble(checkArtist, checkTrack)
-    global HasScrobbled := true
-  }
-}
-
-LoveCurrentTrack() {
-  if (!MediaSession) {
-    return
+  LoveCurrentTrack() {
+    if (!this.MediaSession) {
+      return
+    }
+    this.ScrobbleService.LoveTrack(this.MediaSession.Artist, this.MediaSession.Title)
   }
 
-  LoveTrack(MediaSession.Artist, MediaSession.Title)
-}
+  Start() {
+    this.LastTrack := ""
+    this.LastArtist := ""
+    this.HasScrobbled := false
+    this.MediaSession := ""
 
-StartMediaMonitor() {
-  global LastTrack := ""
-  global LastArtist := ""
-  global ScrobbleTime := 0
-  global HasScrobbled := false
-  global MediaSession := ""
-
-  CheckCurrentTrack()
-
-  SetTimer(CheckCurrentTrack, 0)
-  SetTimer(CheckCurrentTrack, TRACK_POLLING_INTERVAL)
+    SetTimer(this.CheckCurrentTrack.Bind(this), TRACK_POLLING_INTERVAL)
+  }
 }
