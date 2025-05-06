@@ -27,8 +27,8 @@ Persistent()
 #Include .\core\Application.ahk
 
 main() {
-
-  app := Application()
+  auth := AuthService
+  app := Application(auth)
 
   app.Run()
 }

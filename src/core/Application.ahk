@@ -5,8 +5,14 @@ class Application {
   static SESSION_KEY := Application.EnvVars.Has("SESSION_KEY") ? Application.EnvVars["SESSION_KEY"] : ""
   static USER_NAME := Application.EnvVars.Has("USER_NAME") ? Application.EnvVars["USER_NAME"] : ""
 
-  __New() {
+  __New(auth) {
     this.app := Application
+    this.auth := auth(
+      ENV_FILE,
+      this.app.API_KEY, 
+      this.app.API_SECRET, 
+      this.app.EnvVars
+    )
 
     ; temp fallbacks
     global EnvVars := ReadEnv(ENV_FILE)
@@ -28,11 +34,14 @@ class Application {
     }
 
     if (!this.app.SESSION_KEY) {
-      Auth()
+      sessionKey := this.auth.Auth()
+      this.app.SESSION_KEY := sessionKey
     }
 
     if (!this.app.USER_NAME) {
       A_TrayMenu.Disable("Open profile")
+    } else {
+      A_TrayMenu.Add("Open profile", (*) => this.auth.OpenProfilePage(this.app.USER_NAME))
     }
 
     StartMediaMonitor()
