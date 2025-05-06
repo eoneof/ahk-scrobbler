@@ -6,14 +6,20 @@ class Application {
   static USER_NAME := Application.EnvVars.Has("USER_NAME") ? Application.EnvVars["USER_NAME"] : ""
 
   __New() {
-    global EnvVars := ReadEnv(ENV_FILE) ; temp fallback
-
     this.app := Application
+
+    ; temp fallbacks
+    global EnvVars := ReadEnv(ENV_FILE)
+    global API_KEY := this.app.API_KEY
+    global API_SECRET := this.app.API_SECRET
+    global SESSION_KEY := this.app.SESSION_KEY
+    global USER_NAME := this.app.USER_NAME
   }
 
   Run() {
     if (!this.app.EnvVars) {
       ShowConfigDialog()
+
       return
     }
 
