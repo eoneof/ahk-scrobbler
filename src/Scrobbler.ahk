@@ -24,6 +24,13 @@ Persistent()
 #Include .\core\ui\tray_menu.ahk
 
 #Include .\core\media_monitor.ahk
-#Include .\core\init.ahk
+#Include .\core\Application.ahk
 
-Init()
+main() {
+
+  app := Application()
+
+  app.Run()
+}
+
+main()
