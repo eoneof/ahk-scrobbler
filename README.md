@@ -1,4 +1,4 @@
-# ![scrobbler-64.png](src/core/ui/icons/scrobbler-32.png) Autohotkey Scrobbler
+# ![scrobbler.svg](src/core/ui/icons/scrobbler-32.png) Autohotkey Scrobbler
 
 > ⚠️ These scripts require AutoHotkey v2. 
 
