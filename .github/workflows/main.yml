@@ -1,0 +1,53 @@
+name: Compile AHK v2 Script
+
+on:
+  # push:
+  #   branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  compile-ahk:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download AHK v2 Compiler
+      run: |
+        $url = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.10/AutoHotkey_2.0.10_setup.exe"
+        $output = "$env:TEMP\ahk_installer.exe"
+        Invoke-WebRequest -Uri $url -OutFile $output
+        Start-Process -FilePath $output -ArgumentList "/S" -Wait
+
+    - name: Find AHK Compiler
+      run: |
+        $ahkCompiler = "$env:ProgramFiles\AutoHotkey\Compiler\Ahk2Exe.exe"
+        if (-not (Test-Path $ahkCompiler)) {
+          $ahkCompiler = "${env:ProgramFiles(x86)}\AutoHotkey\Compiler\Ahk2Exe.exe"
+        }
+        echo "AHK_COMPILER=$ahkCompiler" >> $env:GITHUB_ENV
+
+    - name: Compile AHK script to EXE
+      run: |
+        # Find the first .ahk file in the repository if not specified
+        $ahkScript = Get-ChildItem -Path . -Filter *.ahk | Select-Object -First 1
+        if (-not $ahkScript) {
+          Write-Error "No .ahk file found in the repository"
+          exit 1
+        }
+
+        $outputExe = "$($ahkScript.BaseName).exe"
+        & "$env:AHK_COMPILER" /in "$($ahkScript.FullName)" /out "$outputExe"
+
+        # Verify the output file was created
+        if (-not (Test-Path $outputExe)) {
+          Write-Error "Compilation failed - output file not created"
+          exit 1
+        }
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: compiled-exe
+        path: "*.exe"
