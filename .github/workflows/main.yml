@@ -46,8 +46,13 @@ jobs:
           exit 1
         }
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload Release Asset
+      id: upload_release_asset
+      uses: actions/upload-release-asset@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: compiled-exe
-        path: "*.exe"
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: "*.exe"
+        asset_name: ahk-scrobbler.exe
+        asset_content_type: application/octet-stream
