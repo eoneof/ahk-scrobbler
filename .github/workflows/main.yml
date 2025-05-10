@@ -14,12 +14,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Download AHK v2 Compiler
-      shell: pwsh
       run: |
-        $url = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.10/AutoHotkey_2.0.10_setup.exe"
-        $output = "$env:TEMP\ahk_installer.exe"
-        Invoke-WebRequest -Uri $url -OutFile $output
-        Start-Process -FilePath $output -ArgumentList "/S" -Wait
+        curl -L "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.10/AutoHotkey_2.0.10_setup.exe" -o "$env:TEMP\ahk_installer.exe"
+        start /wait "$env:TEMP\ahk_installer.exe" /S
 
     - name: Find AHK Compiler
       run: |
